@@ -29,7 +29,7 @@ SUPPORTED_TYPES = ["pdf", "csv", "xlsx", "xls", "docx"]
 INTERNAL_TOOLS = ["read_pdf", "read_csv", "read_excel", "read_docx", "delete_document"]
 
 # LLM models
-GEMINI_MODELS = ["gemini-3.8-flash", "gemini-flash-latest", "gemini-pro-latest", "gemini-3.5-flash-lite"]
+GEMINI_MODELS = ["gemini-3.5-flash-lite", "gemini-3.8-flash", "gemini-flash-latest", "gemini-pro-latest"]
 OPENAI_MODELS = ["gpt-4o-mini", "gpt-4o", "gpt-4.1-mini", "gpt-4.1"]
 GEMINI_KEY_LINK = "https://aistudio.google.com/app/apikey"
 OPENAI_KEY_LINK = "https://platform.openai.com/api-keys"
