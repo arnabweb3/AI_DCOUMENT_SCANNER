@@ -1,0 +1,11 @@
+streamlit
+python-dotenv
+mcp>=2.0
+chromadb
+pypdf
+pandas
+openpyxl
+xlrd
+python-docx
+openai
+google-genai
