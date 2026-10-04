@@ -91,9 +91,22 @@ class ManagerAgent:
                 tools.append(tool)
         return tools
 
+    def basic_answer(self, sources, note):
+        # used when there is no API key (or the LLM fails)
+        # we just show the best matching passages from RAG search
+        if len(sources) == 0:
+            return note + "\n\nI could not find anything about this in your documents."
+
+        answer = note + "\n\nHere are the most relevant parts of your documents:\n\n"
+        for source in sources[:3]:
+            text = source["text"]
+            if len(text) > 500:
+                text = text[:500] + "..."
+            text = text.replace("\n", "\n> ")
+            answer += f"**[{source['id']}] {source['label']}**\n> {text}\n\n"
+        return answer
+
     def ask(self, question, history=None, doc_ids=None):
-        if self.llm is None:
-            raise Exception("Please add an API key in the sidebar first.")
         if history is None:
             history = []
 
@@ -115,6 +128,11 @@ class ManagerAgent:
             number += 1
         if context == "":
             context = "No passages matched."
+
+        # no API key -> basic mode (only RAG search, no LLM)
+        if self.llm is None:
+            note = "ℹ️ **Basic mode** (no API key) - add an API key in the sidebar to get AI-written answers."
+            return {"answer": self.basic_answer(sources, note), "sources": sources, "tool_calls": []}
 
         # Step 2: Augment (make the prompt)
         system_prompt = SYSTEM_PROMPT
@@ -141,7 +159,12 @@ class ManagerAgent:
             return self.mcp.call_tool(name, args)
 
         # Step 3: Generate
-        answer, tools_used = self.llm.ask(system_prompt, messages, self.get_llm_tools(), run_tool)
+        try:
+            answer, tools_used = self.llm.ask(system_prompt, messages, self.get_llm_tools(), run_tool)
+        except Exception as e:
+            # if the key is wrong or the quota is finished, still give an answer in basic mode
+            note = "⚠️ The AI could not answer (" + str(e)[:150] + "), so here is the **basic mode** answer."
+            return {"answer": self.basic_answer(sources, note), "sources": sources, "tool_calls": []}
         answer = answer.strip()
         if answer == "":
             answer = "_(No answer returned.)_"

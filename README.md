@@ -11,7 +11,8 @@ The user interface is made with **Streamlit**.
 How to test it:
 
 1. Open the link (if the app was sleeping, click "Yes, get this app back up!" and wait 1-2 minutes).
-2. In the sidebar choose **Gemini** or **OpenAI**. You can use the saved key or paste your own API key.
+2. In the sidebar choose **Gemini** or **OpenAI**. You can paste your own API key, or leave it empty.
+   If no key is available the app works in **Basic mode** (it shows the best matching parts of your documents instead of an AI answer).
 3. Go to **📤 Upload & Scan**, upload a PDF, CSV, Excel or Word file and click **Scan**.
 4. Go to **💬 Ask Questions** and ask anything about your file (or click a suggested question).
 5. Open **📎 Sources** and **🛠️ MCP tools used** under an answer to see how RAG and MCP were used.

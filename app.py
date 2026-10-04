@@ -29,6 +29,19 @@ def get_icon(file_type):
     return "📄"
 
 
+def get_saved_key(names):
+    # look for the key in streamlit secrets (deployed app) and then in .env / environment
+    for name in names:
+        try:
+            if name in st.secrets and st.secrets[name]:
+                return st.secrets[name]
+        except Exception:
+            pass  # no secrets file on my computer, that's ok
+        if os.getenv(name):
+            return os.getenv(name)
+    return ""
+
+
 # start the MCP server only one time (st.cache_resource keeps it running)
 @st.cache_resource(show_spinner="Starting the MCP server... (first time it can take a minute)")
 def start_mcp_server():
@@ -62,11 +75,11 @@ with st.sidebar:
 
     if provider == "Gemini":
         model_list = GEMINI_MODELS
-        saved_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY") or ""
+        saved_key = get_saved_key(["GEMINI_API_KEY", "GOOGLE_API_KEY"])
         key_link = GEMINI_KEY_LINK
     else:
         model_list = OPENAI_MODELS
-        saved_key = os.getenv("OPENAI_API_KEY") or ""
+        saved_key = get_saved_key(["OPENAI_API_KEY"])
         key_link = OPENAI_KEY_LINK
 
     model = st.selectbox("Model", model_list + ["Other"])
@@ -83,10 +96,13 @@ with st.sidebar:
                               help="Get your key here: " + key_link)
     api_key = typed_key or saved_key
 
-    if api_key and model:
-        st.success("AI is ready ✅")
+    if typed_key and model:
+        st.success("AI is ready ✅ (using your key)")
+    elif saved_key and model:
+        st.success("AI is ready ✅ (using the app's key)")
     else:
-        st.warning(f"Please enter your API key. [Get a key here]({key_link})")
+        st.info("Basic mode: chat works with search only. "
+                f"Add an API key for AI answers. [Get a key here]({key_link})")
 
     with st.expander("⚙️ Advanced settings"):
         temperature = st.slider("Temperature", 0.0, 1.0, 0.2, 0.05,
@@ -317,7 +333,8 @@ with tab2:
                 st.rerun()
 
         if llm is None:
-            st.warning("Please enter your API key in the sidebar to ask questions.")
+            st.info("You are in **Basic mode** (no API key): answers show the best matching parts of "
+                    "your documents. Add an API key in the sidebar to get AI-written answers.")
 
         # suggestion buttons when chat is empty
         if len(st.session_state.messages) == 0:
@@ -326,7 +343,7 @@ with tab2:
             button_cols = st.columns(2)
             for i in range(len(suggestions)):
                 if button_cols[i % 2].button(suggestions[i], key="suggestion_" + str(i),
-                                             use_container_width=True, disabled=(llm is None)):
+                                             use_container_width=True):
                     ask_question(suggestions[i], selected_docs)
                     st.rerun()
 
@@ -341,7 +358,7 @@ with tab2:
                 if message["role"] == "assistant":
                     show_sources_and_tools(message)
 
-        question = st.chat_input("Ask a question about your documents...", disabled=(llm is None))
+        question = st.chat_input("Ask a question about your documents...")
         if question:
             ask_question(question, selected_docs)
             st.rerun()
@@ -384,7 +401,7 @@ with tab3:
                     st.warning(w)
 
                 b1, b2, b3 = st.columns([1, 1, 3])
-                if b1.button("✨ Summarize", key="sum_" + d["doc_id"], disabled=(llm is None)):
+                if b1.button("✨ Summarize", key="sum_" + d["doc_id"]):
                     with st.spinner("Making summary..."):
                         try:
                             result = manager.ask("Give a clear, well-structured summary of '" + d["file_name"] + "'.",
