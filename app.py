@@ -62,19 +62,26 @@ with st.sidebar:
 
     if provider == "Gemini":
         model_list = GEMINI_MODELS
-        default_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY") or ""
+        saved_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY") or ""
         key_link = GEMINI_KEY_LINK
     else:
         model_list = OPENAI_MODELS
-        default_key = os.getenv("OPENAI_API_KEY") or ""
+        saved_key = os.getenv("OPENAI_API_KEY") or ""
         key_link = OPENAI_KEY_LINK
 
     model = st.selectbox("Model", model_list + ["Other"])
     if model == "Other":
         model = st.text_input("Type the model name", placeholder="example: gpt-4o")
 
-    api_key = st.text_input(provider + " API Key", value=default_key, type="password",
-                            help="Get your key here: " + key_link)
+    # the saved key (from .env or streamlit secrets) is NOT put in the text box,
+    # otherwise anyone opening the website could see it
+    if saved_key:
+        placeholder = "Using the saved key (or paste your own)"
+    else:
+        placeholder = "Paste your API key here"
+    typed_key = st.text_input(provider + " API Key", type="password", placeholder=placeholder,
+                              help="Get your key here: " + key_link)
+    api_key = typed_key or saved_key
 
     if api_key and model:
         st.success("AI is ready ✅")
